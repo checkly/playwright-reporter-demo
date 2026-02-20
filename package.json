@@ -1,0 +1,32 @@
+{
+  "name": "checkly-playwright-reporter-example",
+  "version": "1.0.0",
+  "description": "Example repo showcasing the Checkly Playwright Reporter — a self-contained vinyl shop app + Playwright tests that upload results to Checkly Test Sessions.",
+  "private": true,
+  "scripts": {
+    "dev": "node app/server.js",
+    "test": "npx playwright test",
+    "test:chromium": "npx playwright test --project=chromium",
+    "test:headed": "npx playwright test --headed --project=chromium",
+    "test:debug": "npx playwright test --debug --project=chromium",
+    "test:ui": "npx playwright test --ui",
+    "report": "npx playwright show-report"
+  },
+  "keywords": [
+    "playwright",
+    "checkly",
+    "testing",
+    "monitoring",
+    "reporter",
+    "e2e",
+    "test-sessions"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@checkly/playwright-reporter": "^1.5.0",
+    "@playwright/test": "^1.57.0"
+  }
+}

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raccoon Records — Curated Vinyl</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-hover: #1c1c1c;
+      --border: #2a2a2a;
+      --text: #e8e4dd;
+      --text-muted: #8a847a;
+      --accent: #e8c547;
+      --accent-dim: #b89a2f;
+      --danger: #e54d4d;
+      --success: #4de58a;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans: 'DM Sans', -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --radius: 6px;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ──────────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .logo {
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      color: var(--text);
+      text-decoration: none;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon { font-size: 1.8rem; }
+
+    /* ── Search ──────────────────────────────────────── */
+    .search-container {
+      flex: 1;
+      max-width: 400px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.6rem 1rem 0.6rem 2.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--accent-dim); }
+
+    .search-icon {
+      position: absolute;
+      left: 0.8rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* ── Cart Button ─────────────────────────────────── */
+    .cart-btn {
+      position: relative;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .cart-btn:hover {
+      border-color: var(--accent-dim);
+      background: var(--surface);
+    }
+
+    .cart-badge {
+      background: var(--accent);
+      color: var(--bg);
+      font-size: 0.7rem;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+    }
+
+    .cart-badge.empty { display: none; }
+
+    /* ── Genre Filters ───────────────────────────────── */
+    .filters {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 0;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--text-muted);
+      color: var(--text);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+      font-weight: 500;
+    }
+
+    /* ── Hero Section ────────────────────────────────── */
+    .hero {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 4rem 2rem 2rem;
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 .accent { color: var(--accent); }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 500px;
+    }
+
+    /* ── Record Grid ─────────────────────────────────── */
+    .grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .record-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .record-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--text-muted);
+    }
+
+    .record-cover {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .vinyl-label {
+      width: 45%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 3px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.3;
+      position: relative;
+    }
+
+    .vinyl-label.has-icon {
+      font-size: 2.5rem;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .vinyl-label::before {
+      content: '';
+      position: absolute;
+      width: 12%;
+      aspect-ratio: 1;
+      background: #333;
+      border-radius: 50%;
+    }
+
+    .vinyl-label.has-icon::before {
+      display: none;
+    }
+
+    .vinyl-label::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      border: 1px solid #222;
+    }
+
+    .vinyl-label.has-icon::after {
+      display: none;
+    }
+
+    .record-info { padding: 1rem 1.2rem; }
+
+    .record-genre {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .record-title {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .record-artist {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .record-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .record-price {
+      font-family: var(--mono);
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .add-to-cart-btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .add-to-cart-btn:hover { opacity: 0.85; }
+
+    /* ── Record Detail Modal ─────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-cover {
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px 12px 0 0;
+      position: relative;
+    }
+
+    .modal-cover .vinyl-label { width: 25%; }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-body { padding: 1.5rem 2rem 2rem; }
+
+    .modal-genre {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-title {
+      font-family: var(--serif);
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .modal-artist {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .modal-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.9rem;
+    }
+
+    .modal-meta span { color: var(--text-muted); }
+    .modal-meta strong { color: var(--text); }
+
+    .modal-description {
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .modal-price {
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .modal-add-btn {
+      flex: 1;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .modal-add-btn:hover { opacity: 0.85; }
+
+    .modal-stock {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+    }
+
+    .modal-stock.low { color: var(--danger); }
+
+    /* ── Cart Drawer ─────────────────────────────────── */
+    .cart-drawer {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 400px;
+      max-width: 90vw;
+      height: 100vh;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      z-index: 300;
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cart-drawer.open { right: 0; }
+
+    .cart-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cart-header h2 {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+    }
+
+    .cart-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.3rem;
+    }
+
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1.5rem;
+    }
+
+    .cart-empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 3rem 1rem;
+      font-style: italic;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cart-item-color {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+
+    .cart-item-info { flex: 1; }
+    .cart-item-title { font-weight: 500; font-size: 0.9rem; }
+    .cart-item-artist { font-size: 0.8rem; color: var(--text-muted); }
+
+    .cart-item-price {
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--accent);
+      align-self: center;
+    }
+
+    .cart-footer {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .cart-total-label { font-size: 1rem; color: var(--text-muted); }
+
+    .cart-total-value {
+      font-family: var(--mono);
+      font-size: 1.3rem;
+      color: var(--accent);
+    }
+
+    .cart-checkout-btn {
+      width: 100%;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.9rem;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .cart-clear-btn {
+      width: 100%;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.6rem;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    /* ── Empty State ─────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state h3 { font-family: var(--serif); color: var(--text); margin-bottom: 0.5rem; }
+
+    /* ── Toast Notification ──────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--accent);
+      color: var(--bg);
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      font-weight: 500;
+      font-size: 0.9rem;
+      z-index: 400;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Footer ──────────────────────────────────────── */
+    footer {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    footer a { color: var(--accent-dim); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .header-inner { padding: 0.75rem 1rem; }
+      .hero { padding: 2rem 1rem 1rem; }
+      .grid { padding: 1rem; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+      .filters { padding: 1rem 1rem 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo" data-testid="logo">
+        <span class="logo-icon">🦝</span>
+        Raccoon Records
+      </a>
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search records, artists, genres..."
+          data-testid="search-input"
+          aria-label="Search records"
+        >
+      </div>
+      <button class="cart-btn" data-testid="cart-button" aria-label="Open cart">
+        🛒 Cart
+        <span class="cart-badge empty" data-testid="cart-badge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Curated vinyl for<br><span class="accent">discerning ears</span></h1>
+    <p>Hand-picked records from independent artists and underground labels. Every pressing tells a story.</p>
+  </section>
+
+  <!-- Filters -->
+  <nav class="filters" data-testid="genre-filters" aria-label="Filter by genre">
+    <button class="filter-btn active" data-genre="">All</button>
+  </nav>
+
+  <!-- Record Grid -->
+  <main class="grid" data-testid="record-grid" aria-label="Record catalog"></main>
+
+  <!-- Record Detail Modal -->
+  <div class="modal-overlay" data-testid="record-modal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-cover">
+        <div class="vinyl-label"></div>
+        <button class="modal-close" data-testid="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-genre" data-testid="modal-genre"></div>
+        <h2 class="modal-title" data-testid="modal-title"></h2>
+        <div class="modal-artist" data-testid="modal-artist"></div>
+        <div class="modal-meta">
+          <span>Year: <strong data-testid="modal-year"></strong></span>
+          <span>Rating: <strong data-testid="modal-rating"></strong></span>
+        </div>
+        <p class="modal-description" data-testid="modal-description"></p>
+        <div class="modal-actions">
+          <span class="modal-price" data-testid="modal-price"></span>
+          <button class="modal-add-btn" data-testid="modal-add-to-cart">Add to Cart</button>
+        </div>
+        <div class="modal-stock" data-testid="modal-stock"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-drawer" data-testid="cart-drawer">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button class="cart-close" data-testid="cart-close" aria-label="Close cart">✕</button>
+    </div>
+    <div class="cart-items" data-testid="cart-items">
+      <div class="cart-empty">Your cart is empty. Start digging!</div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span class="cart-total-label">Total</span>
+        <span class="cart-total-value" data-testid="cart-total">$0.00</span>
+      </div>
+      <button class="cart-checkout-btn" data-testid="checkout-btn">Checkout</button>
+      <button class="cart-clear-btn" data-testid="clear-cart-btn">Clear Cart</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" data-testid="toast"></div>
+
+  <!-- Footer -->
+  <footer>
+    <span>© 2026 Raccoon Records — A <a href="https://www.checklyhq.com" target="_blank">Checkly</a> demo</span>
+    <span>Built to showcase <a href="https://www.npmjs.com/package/@checkly/playwright-reporter" target="_blank">@checkly/playwright-reporter</a></span>
+  </footer>
+
+  <script>
+    let records = [];
+    let currentGenre = '';
+    let currentSearch = '';
+    let cartData = { items: [], total: 0, count: 0 };
+
+    const grid = document.querySelector('[data-testid="record-grid"]');
+    const searchInput = document.querySelector('[data-testid="search-input"]');
+    const filtersNav = document.querySelector('[data-testid="genre-filters"]');
+    const modalOverlay = document.querySelector('[data-testid="record-modal"]');
+    const cartDrawer = document.querySelector('[data-testid="cart-drawer"]');
+    const cartBadge = document.querySelector('[data-testid="cart-badge"]');
+    const cartBtn = document.querySelector('[data-testid="cart-button"]');
+    const toast = document.querySelector('[data-testid="toast"]');
+
+    async function fetchRecords() {
+      const params = new URLSearchParams();
+      if (currentSearch) params.set('q', currentSearch);
+      if (currentGenre) params.set('genre', currentGenre);
+      const res = await fetch(`/api/records?${params}`);
+      records = await res.json();
+      renderGrid();
+    }
+
+    async function fetchGenres() {
+      const res = await fetch('/api/genres');
+      const genres = await res.json();
+      genres.forEach((g) => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.dataset.genre = g;
+        btn.textContent = g;
+        filtersNav.appendChild(btn);
+      });
+    }
+
+    async function fetchCart() {
+      const res = await fetch('/api/cart');
+      cartData = await res.json();
+      renderCartBadge();
+    }
+
+    async function addToCart(recordId) {
+      await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordId }),
+      });
+      await fetchCart();
+      showToast('Added to cart!');
+    }
+
+    async function clearCart() {
+      await fetch('/api/cart', { method: 'DELETE' });
+      await fetchCart();
+      renderCartItems();
+    }
+
+    function renderGrid() {
+      if (records.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" data-testid="empty-state" style="grid-column: 1/-1">
+            <div class="empty-state-icon">🔍</div>
+            <h3>No records found</h3>
+            <p>Try a different search or filter.</p>
+          </div>`;
+        return;
+      }
+      grid.innerHTML = records.map((r) => `
+        <article class="record-card" data-testid="record-card" data-id="${r.id}">
+          <div class="record-cover" style="background: ${r.cover}">
+            <div class="vinyl-label ${r.icon ? 'has-icon' : ''}">${r.icon || r.artist}</div>
+          </div>
+          <div class="record-info">
+            <div class="record-genre">${r.genre} · ${r.year}${r.badge ? ` · <span style="color: #00ff88;">${r.badge}</span>` : ''}</div>
+            <div class="record-title">${r.title}</div>
+            <div class="record-artist">${r.artist}</div>
+            <div class="record-footer">
+              <span class="record-price">$${r.price.toFixed(2)}</span>
+              <button class="add-to-cart-btn" data-testid="add-to-cart-${r.id}" data-record-id="${r.id}">Add to Cart</button>
+            </div>
+          </div>
+        </article>`).join('');
+    }
+
+    function renderCartBadge() {
+      cartBadge.textContent = cartData.count;
+      cartBadge.classList.toggle('empty', cartData.count === 0);
+    }
+
+    function renderCartItems() {
+      const container = document.querySelector('[data-testid="cart-items"]');
+      const totalEl = document.querySelector('[data-testid="cart-total"]');
+      if (cartData.items.length === 0) {
+        container.innerHTML = '<div class="cart-empty">Your cart is empty. Start digging!</div>';
+        totalEl.textContent = '$0.00';
+        return;
+      }
+      container.innerHTML = cartData.items.map((item) => `
+        <div class="cart-item" data-testid="cart-item">
+          <div class="cart-item-color" style="background: ${item.record.cover}"></div>
+          <div class="cart-item-info">
+            <div class="cart-item-title">${item.record.title}</div>
+            <div class="cart-item-artist">${item.record.artist} × ${item.quantity}</div>
+          </div>
+          <div class="cart-item-price">$${(item.record.price * item.quantity).toFixed(2)}</div>
+        </div>`).join('');
+      totalEl.textContent = `$${cartData.total.toFixed(2)}`;
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function openModal(record) {
+      const modal = modalOverlay.querySelector('.modal');
+      modal.querySelector('.modal-cover').style.background = record.cover;
+      const vinylLabel = modal.querySelector('.vinyl-label');
+      vinylLabel.textContent = record.icon || record.artist;
+      vinylLabel.className = 'vinyl-label' + (record.icon ? ' has-icon' : '');
+      modal.querySelector('[data-testid="modal-genre"]').textContent = record.genre;
+      modal.querySelector('[data-testid="modal-title"]').textContent = record.title;
+      modal.querySelector('[data-testid="modal-artist"]').textContent = `by ${record.artist}`;
+      modal.querySelector('[data-testid="modal-year"]').textContent = record.year;
+      modal.querySelector('[data-testid="modal-rating"]').textContent = `★ ${record.rating}`;
+      modal.querySelector('[data-testid="modal-description"]').textContent = record.description;
+      modal.querySelector('[data-testid="modal-price"]').textContent = `$${record.price.toFixed(2)}`;
+      const stockEl = modal.querySelector('[data-testid="modal-stock"]');
+      stockEl.textContent = record.stock <= 5 ? `Only ${record.stock} left in stock` : `${record.stock} in stock`;
+      stockEl.classList.toggle('low', record.stock <= 5);
+      modal.querySelector('[data-testid="modal-add-to-cart"]').onclick = (e) => { e.stopPropagation(); addToCart(record.id); };
+      modalOverlay.classList.add('open');
+    }
+
+    function closeModal() { modalOverlay.classList.remove('open'); }
+
+    searchInput.addEventListener('input', debounce(() => {
+      currentSearch = searchInput.value.trim();
+      fetchRecords();
+    }, 300));
+
+    filtersNav.addEventListener('click', (e) => {
+      if (!e.target.matches('.filter-btn')) return;
+      filtersNav.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+      e.target.classList.add('active');
+      currentGenre = e.target.dataset.genre;
+      fetchRecords();
+    });
+
+    grid.addEventListener('click', (e) => {
+      const addBtn = e.target.closest('.add-to-cart-btn');
+      if (addBtn) { e.stopPropagation(); addToCart(parseInt(addBtn.dataset.recordId)); return; }
+      const card = e.target.closest('.record-card');
+      if (card) { const r = records.find((r) => r.id === parseInt(card.dataset.id)); if (r) openModal(r); }
+    });
+
+    modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+    document.querySelector('[data-testid="modal-close"]').addEventListener('click', closeModal);
+    cartBtn.addEventListener('click', () => { fetchCart().then(renderCartItems); cartDrawer.classList.add('open'); });
+    document.querySelector('[data-testid="cart-close"]').addEventListener('click', () => { cartDrawer.classList.remove('open'); });
+    document.querySelector('[data-testid="clear-cart-btn"]').addEventListener('click', clearCart);
+
+    function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+    fetchRecords();
+    fetchGenres();
+    fetchCart();
+  </script>
+</body>
+</html>

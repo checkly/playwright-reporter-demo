@@ -101,7 +101,10 @@ export default defineConfig({
     {
       name: 'checkly',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: ['visual-regression.spec.ts'],
+      // Monitoring mode: select monitor-tagged tests only.
+      grep: /@monitor/,
+      // Defense in depth: never run risky/stateful suites in monitoring.
+      grepInvert: /@destructive|@stateful|@visual/,
     },
   ],
 

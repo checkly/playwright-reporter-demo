@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Shopping Cart', () => {
+test.describe('Shopping Cart @stateful', () => {
   // Cart is shared DB state — run serially to avoid race conditions
   test.describe.configure({ mode: 'serial' });
   const BASE = process.env.ENVIRONMENT_URL || '';

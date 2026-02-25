@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node server.js",
     "test": "npx playwright test",
+    "test:monitor": "npx playwright test --project=checkly",
     "test:chromium": "npx playwright test --project=chromium",
     "test:headed": "npx playwright test --headed --project=chromium",
     "test:debug": "npx playwright test --debug --project=chromium",
@@ -13,7 +14,8 @@
     "report": "npx playwright show-report",
     "checkly": "npx checkly test",
     "checkly:deploy": "npx checkly deploy",
-    "checkly:destroy": "npx checkly destroy"
+    "checkly:destroy": "npx checkly destroy",
+    "checkly:trigger": "npx checkly trigger --tags raccoon-records,demo"
   },
   "keywords": [
     "playwright",

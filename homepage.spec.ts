@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Homepage', () => {
+test.describe('Homepage @monitor', () => {
   const BASE = process.env.ENVIRONMENT_URL || '';
   test('loads with correct title and branding', async ({ page }) => {
     await page.goto(`${BASE}/`);
@@ -44,8 +44,9 @@ test.describe('Homepage', () => {
     await expect(allBtn).toHaveClass(/active/);
 
     const buttons = filters.locator('.filter-btn');
-    const count = await buttons.count();
-    expect(count).toBeGreaterThan(1);
+    await expect
+      .poll(async () => buttons.count(), { timeout: 15_000 })
+      .toBeGreaterThan(1);
   });
 
   test('cart button is visible with empty badge', async ({ page }) => {

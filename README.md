@@ -105,6 +105,23 @@ Run it standalone with `npm run dev` and visit `http://localhost:3000`.
 | `api-health.spec.ts` | API testing | Direct HTTP requests, schema validation, latency checks, 404 handling |
 | `visual-regression.spec.ts` | Screenshot comparison | Full-page + component snapshots with diff thresholds |
 
+### Monitoring vs E2E strategy
+
+This repo uses test intent tags so monitoring and full E2E can share the same code without runtime conditionals:
+
+- `@monitor`: Stable, non-destructive checks for Checkly Playwright monitoring.
+- `@stateful`: Flows that mutate shared app state (not part of monitoring suite).
+- `@destructive`: Flows that create irreversible state (like checkout/order).
+- `@visual`: Snapshot-driven visual regression checks.
+
+The `checkly` Playwright project is configured to run only `@monitor` tests (and invert destructive/stateful/visual tags).
+
+Useful commands:
+
+- `npm run test:monitor` — runs only monitoring-safe checks locally.
+- `npm run checkly` — runs the Checkly PlaywrightCheck test command.
+- `npm run checkly:trigger` — triggers deployed checks by tags.
+
 ## Configuration walkthrough
 
 ```typescript

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('API Health', () => {
+test.describe('API Health @monitor', () => {
   // Cart test mutates shared DB state — run serially to avoid races
   test.describe.configure({ mode: 'serial' });
   const BASE = process.env.ENVIRONMENT_URL || '';

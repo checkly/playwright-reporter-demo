@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Visual Regression', () => {
+test.describe('Visual Regression @visual', () => {
   test('homepage layout matches snapshot', async ({ page }) => {
     await page.goto('/');
 

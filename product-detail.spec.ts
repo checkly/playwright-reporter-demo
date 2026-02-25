@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Product Detail', () => {
+test.describe('Product Detail @monitor', () => {
   const BASE = process.env.ENVIRONMENT_URL || '';
   test.beforeEach(async ({ request }) => {
     // Clear cart to avoid stale badge counts from parallel tests

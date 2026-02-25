@@ -84,6 +84,11 @@ export default defineConfig({
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
     },
+    {
+      name: 'checkly',
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: ['visual-regression.spec.ts'],
+    },
   ],
 
   /* ── Auto-start the demo app ───────────────────────────────── */

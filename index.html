@@ -1189,6 +1189,20 @@
     document.querySelector('[data-testid="checkout-retry-btn"]').addEventListener('click', () => { resetCartDrawer(); renderCartItems(); });
     document.querySelector('[data-testid="checkout-error-close-btn"]').addEventListener('click', () => { resetCartDrawer(); cartDrawer.classList.remove('open'); });
 
+    // Demo shortcut: Ctrl+Shift+D prefills checkout form with stub data
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        const form = document.querySelector('[data-testid="checkout-form"]');
+        if (form && form.style.display !== 'none') {
+          e.preventDefault();
+          form.querySelector('[data-testid="checkout-name"]').value = 'Alex Rivera';
+          form.querySelector('[data-testid="checkout-email"]').value = 'alex@raccoonrecords.dev';
+          form.querySelector('[data-testid="checkout-address"]').value = '742 Evergreen Terrace\nBrooklyn, NY 11201';
+          showToast('Demo data filled!');
+        }
+      }
+    });
+
     function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
     fetchRecords();

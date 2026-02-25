@@ -10,7 +10,10 @@
     "test:headed": "npx playwright test --headed --project=chromium",
     "test:debug": "npx playwright test --debug --project=chromium",
     "test:ui": "npx playwright test --ui",
-    "report": "npx playwright show-report"
+    "report": "npx playwright show-report",
+    "checkly": "npx checkly test",
+    "checkly:deploy": "npx checkly deploy",
+    "checkly:destroy": "npx checkly destroy"
   },
   "keywords": [
     "playwright",

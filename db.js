@@ -51,7 +51,21 @@ function createDb() {
   };
 }
 
-const db = createDb();
+// Lazy singleton — created on first use so env vars are available at runtime
+let _db;
+function getDb() {
+  if (!_db) _db = createDb();
+  return _db;
+}
+
+// Proxy that forwards all calls to the lazy singleton
+const db = new Proxy({}, {
+  get(_, prop) {
+    const real = getDb();
+    const val = real[prop];
+    return typeof val === 'function' ? val.bind(real) : val;
+  },
+});
 
 async function initSchema() {
   await db.batch([

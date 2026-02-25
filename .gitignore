@@ -4,4 +4,4 @@ playwright-report/
 blob-report/
 .env
 *.zip
-raccoon.db
+raccoon.db*

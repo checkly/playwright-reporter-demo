@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Search & Filters', () => {
+  const BASE = process.env.ENVIRONMENT_URL || '';
   test('search filters records by title', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     await expect(page.getByTestId('record-card').first()).toBeVisible();
     const initialCount = await page.getByTestId('record-card').count();
@@ -17,7 +18,7 @@ test.describe('Search & Filters', () => {
   });
 
   test('search filters records by artist name', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('search-input').fill('Slow Pour');
@@ -29,7 +30,7 @@ test.describe('Search & Filters', () => {
   });
 
   test('search shows empty state for no results', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('search-input').fill('xyznonexistent');
@@ -41,7 +42,7 @@ test.describe('Search & Filters', () => {
   });
 
   test('genre filter narrows catalog to matching records', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     const jazzFilter = page.getByTestId('genre-filters').getByText('Jazz');
@@ -58,7 +59,7 @@ test.describe('Search & Filters', () => {
   });
 
   test('"All" filter resets the catalog', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
     const fullCount = await page.getByTestId('record-card').count();
 

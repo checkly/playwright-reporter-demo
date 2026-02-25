@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Checkout', () => {
   // Cart is shared DB state — run serially to avoid race conditions
   test.describe.configure({ mode: 'serial' });
-  const BASE = '';
+  const BASE = process.env.ENVIRONMENT_URL || '';
 
   test.beforeEach(async ({ request }) => {
     await request.delete(`${BASE}/api/cart`);
@@ -101,7 +101,7 @@ test.describe('Checkout', () => {
   });
 
   test('full checkout flow via UI', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     // Add item to cart
@@ -126,7 +126,7 @@ test.describe('Checkout', () => {
   });
 
   test('checkout form shows total and back button returns to cart', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('add-to-cart-1').click();
@@ -146,7 +146,7 @@ test.describe('Checkout', () => {
   });
 
   test('submitting checkout form with empty fields shows validation toast', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('add-to-cart-1').click();

@@ -3,13 +3,14 @@ import { test, expect } from '@playwright/test';
 test.describe('Shopping Cart', () => {
   // Cart is shared DB state — run serially to avoid race conditions
   test.describe.configure({ mode: 'serial' });
+  const BASE = process.env.ENVIRONMENT_URL || '';
   test.beforeEach(async ({ request }) => {
     // Clear cart before each test via API
-    await request.delete('/api/cart');
+    await request.delete(`${BASE}/api/cart`);
   });
 
   test('add to cart from catalog card', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('add-to-cart-1').click();
@@ -20,11 +21,11 @@ test.describe('Shopping Cart', () => {
 
   test('cart drawer opens and shows items', async ({ page, request }) => {
     // Pre-add an item via API
-    await request.post('/api/cart', {
+    await request.post(`${BASE}/api/cart`, {
       data: { recordId: 1 },
     });
 
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     await page.getByTestId('cart-button').click();
 
@@ -38,10 +39,10 @@ test.describe('Shopping Cart', () => {
   });
 
   test('clear cart empties all items', async ({ page, request }) => {
-    await request.post('/api/cart', { data: { recordId: 1 } });
-    await request.post('/api/cart', { data: { recordId: 2 } });
+    await request.post(`${BASE}/api/cart`, { data: { recordId: 1 } });
+    await request.post(`${BASE}/api/cart`, { data: { recordId: 2 } });
 
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     await page.getByTestId('cart-button').click();
     await expect(page.getByTestId('cart-item').first()).toBeVisible();
@@ -53,7 +54,7 @@ test.describe('Shopping Cart', () => {
   });
 
   test('cart badge updates when adding multiple items', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('add-to-cart-1').click();
@@ -64,7 +65,7 @@ test.describe('Shopping Cart', () => {
   });
 
   test('cart close button hides the drawer', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     await page.getByTestId('cart-button').click();
     await expect(page.getByTestId('cart-drawer')).toBeVisible();

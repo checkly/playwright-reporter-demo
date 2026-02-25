@@ -4,7 +4,7 @@
   "description": "Example repo showcasing the Checkly Playwright Reporter — a self-contained vinyl shop app + Playwright tests that upload results to Checkly Test Sessions.",
   "private": true,
   "scripts": {
-    "dev": "node app/server.js",
+    "dev": "node server.js",
     "test": "npx playwright test",
     "test:chromium": "npx playwright test --project=chromium",
     "test:headed": "npx playwright test --headed --project=chromium",

@@ -579,6 +579,91 @@
       margin-top: 0.5rem;
     }
 
+    /* ── Checkout States ──────────────────────────────── */
+    .checkout-confirmation {
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+
+    .checkout-confirmation .success-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .checkout-confirmation h3 {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .checkout-confirmation .order-id {
+      font-family: var(--mono);
+      color: var(--accent);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .checkout-confirmation .order-total {
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+
+    .checkout-error {
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+
+    .checkout-error .error-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .checkout-error h3 {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      color: var(--danger);
+      margin-bottom: 0.5rem;
+    }
+
+    .checkout-error .error-message {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      margin-bottom: 1.5rem;
+      word-break: break-word;
+    }
+
+    .checkout-continue-btn {
+      width: 100%;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.8rem;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .checkout-retry-btn {
+      width: 100%;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.8rem;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+    }
+
     /* ── Empty State ─────────────────────────────────── */
     .empty-state {
       text-align: center;
@@ -714,6 +799,21 @@
       <button class="cart-checkout-btn" data-testid="checkout-btn">Checkout</button>
       <button class="cart-clear-btn" data-testid="clear-cart-btn">Clear Cart</button>
     </div>
+    <!-- Checkout states (hidden by default, shown by JS) -->
+    <div class="checkout-confirmation" data-testid="checkout-confirmation" style="display:none">
+      <div class="success-icon">✓</div>
+      <h3>Order Confirmed!</h3>
+      <div class="order-id" data-testid="order-id"></div>
+      <div class="order-total" data-testid="order-total"></div>
+      <button class="checkout-continue-btn" data-testid="continue-shopping-btn">Continue Shopping</button>
+    </div>
+    <div class="checkout-error" data-testid="checkout-error" style="display:none">
+      <div class="error-icon">!</div>
+      <h3>Checkout Failed</h3>
+      <div class="error-message" data-testid="checkout-error-message"></div>
+      <button class="checkout-retry-btn" data-testid="checkout-retry-btn">Try Again</button>
+      <button class="checkout-continue-btn" data-testid="checkout-error-close-btn">Close</button>
+    </div>
   </div>
 
   <!-- Toast -->
@@ -781,6 +881,48 @@
       await fetch('/api/cart', { method: 'DELETE' });
       await fetchCart();
       renderCartItems();
+    }
+
+    async function performCheckout() {
+      try {
+        const res = await fetch('/api/checkout', { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json();
+          showCheckoutError(err.error || `HTTP ${res.status}`);
+          return;
+        }
+        const order = await res.json();
+        showCheckoutConfirmation(order);
+        await fetchCart();
+      } catch (err) {
+        showCheckoutError(err.message);
+      }
+    }
+
+    function showCheckoutConfirmation(order) {
+      document.querySelector('[data-testid="cart-items"]').style.display = 'none';
+      document.querySelector('.cart-footer').style.display = 'none';
+      document.querySelector('[data-testid="checkout-error"]').style.display = 'none';
+      const conf = document.querySelector('[data-testid="checkout-confirmation"]');
+      conf.style.display = 'block';
+      conf.querySelector('[data-testid="order-id"]').textContent = `Order #${order.orderId}`;
+      conf.querySelector('[data-testid="order-total"]').textContent = `$${order.total.toFixed(2)}`;
+    }
+
+    function showCheckoutError(message) {
+      document.querySelector('[data-testid="cart-items"]').style.display = 'none';
+      document.querySelector('.cart-footer').style.display = 'none';
+      document.querySelector('[data-testid="checkout-confirmation"]').style.display = 'none';
+      const err = document.querySelector('[data-testid="checkout-error"]');
+      err.style.display = 'block';
+      err.querySelector('[data-testid="checkout-error-message"]').textContent = message;
+    }
+
+    function resetCartDrawer() {
+      document.querySelector('[data-testid="cart-items"]').style.display = '';
+      document.querySelector('.cart-footer').style.display = '';
+      document.querySelector('[data-testid="checkout-confirmation"]').style.display = 'none';
+      document.querySelector('[data-testid="checkout-error"]').style.display = 'none';
     }
 
     function renderGrid() {
@@ -885,9 +1027,13 @@
 
     modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
     document.querySelector('[data-testid="modal-close"]').addEventListener('click', closeModal);
-    cartBtn.addEventListener('click', () => { fetchCart().then(renderCartItems); cartDrawer.classList.add('open'); });
+    cartBtn.addEventListener('click', () => { resetCartDrawer(); fetchCart().then(renderCartItems); cartDrawer.classList.add('open'); });
     document.querySelector('[data-testid="cart-close"]').addEventListener('click', () => { cartDrawer.classList.remove('open'); });
     document.querySelector('[data-testid="clear-cart-btn"]').addEventListener('click', clearCart);
+    document.querySelector('[data-testid="checkout-btn"]').addEventListener('click', performCheckout);
+    document.querySelector('[data-testid="continue-shopping-btn"]').addEventListener('click', () => { resetCartDrawer(); cartDrawer.classList.remove('open'); });
+    document.querySelector('[data-testid="checkout-retry-btn"]').addEventListener('click', () => { resetCartDrawer(); renderCartItems(); });
+    document.querySelector('[data-testid="checkout-error-close-btn"]').addEventListener('click', () => { resetCartDrawer(); cartDrawer.classList.remove('open'); });
 
     function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 

@@ -5,7 +5,7 @@ test.describe('Shopping Cart', () => {
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ request }) => {
     // Clear cart before each test via API
-    await request.delete('http://localhost:3000/api/cart');
+    await request.delete('/api/cart');
   });
 
   test('add to cart from catalog card', async ({ page }) => {
@@ -20,7 +20,7 @@ test.describe('Shopping Cart', () => {
 
   test('cart drawer opens and shows items', async ({ page, request }) => {
     // Pre-add an item via API
-    await request.post('http://localhost:3000/api/cart', {
+    await request.post('/api/cart', {
       data: { recordId: 1 },
     });
 
@@ -38,8 +38,8 @@ test.describe('Shopping Cart', () => {
   });
 
   test('clear cart empties all items', async ({ page, request }) => {
-    await request.post('http://localhost:3000/api/cart', { data: { recordId: 1 } });
-    await request.post('http://localhost:3000/api/cart', { data: { recordId: 2 } });
+    await request.post('/api/cart', { data: { recordId: 1 } });
+    await request.post('/api/cart', { data: { recordId: 2 } });
 
     await page.goto('/');
 

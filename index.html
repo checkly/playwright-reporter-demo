@@ -664,6 +664,108 @@
       margin-bottom: 0.5rem;
     }
 
+    /* ── Checkout Form ────────────────────────────────── */
+    .checkout-form {
+      padding: 1.5rem;
+    }
+
+    .checkout-form h3 {
+      font-family: var(--serif);
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .checkout-form label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+      margin-top: 0.75rem;
+    }
+
+    .checkout-form label:first-of-type {
+      margin-top: 0;
+    }
+
+    .checkout-form input,
+    .checkout-form textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .checkout-form input:focus,
+    .checkout-form textarea:focus {
+      border-color: var(--accent-dim);
+    }
+
+    .checkout-form textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .checkout-form-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .checkout-form-total-label {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .checkout-form-total-value {
+      font-family: var(--mono);
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+
+    .place-order-btn {
+      width: 100%;
+      margin-top: 1rem;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.9rem;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .place-order-btn:hover { opacity: 0.85; }
+
+    .place-order-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .checkout-back-btn {
+      width: 100%;
+      margin-top: 0.5rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.6rem;
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
     /* ── Empty State ─────────────────────────────────── */
     .empty-state {
       text-align: center;
@@ -799,6 +901,22 @@
       <button class="cart-checkout-btn" data-testid="checkout-btn">Checkout</button>
       <button class="cart-clear-btn" data-testid="clear-cart-btn">Clear Cart</button>
     </div>
+    <!-- Checkout form -->
+    <div class="checkout-form" data-testid="checkout-form" style="display:none">
+      <h3>Shipping Details</h3>
+      <label for="checkout-name">Full Name</label>
+      <input type="text" id="checkout-name" data-testid="checkout-name" placeholder="Jane Doe" autocomplete="name">
+      <label for="checkout-email">Email</label>
+      <input type="email" id="checkout-email" data-testid="checkout-email" placeholder="jane@example.com" autocomplete="email">
+      <label for="checkout-address">Shipping Address</label>
+      <textarea id="checkout-address" data-testid="checkout-address" placeholder="123 Vinyl Lane&#10;Brooklyn, NY 11201" autocomplete="street-address"></textarea>
+      <div class="checkout-form-total">
+        <span class="checkout-form-total-label">Total</span>
+        <span class="checkout-form-total-value" data-testid="checkout-form-total"></span>
+      </div>
+      <button class="place-order-btn" data-testid="place-order-btn">Place Order</button>
+      <button class="checkout-back-btn" data-testid="checkout-back-btn">Back to Cart</button>
+    </div>
     <!-- Checkout states (hidden by default, shown by JS) -->
     <div class="checkout-confirmation" data-testid="checkout-confirmation" style="display:none">
       <div class="success-icon">✓</div>
@@ -883,9 +1001,37 @@
       renderCartItems();
     }
 
+    function showCheckoutForm() {
+      document.querySelector('[data-testid="cart-items"]').style.display = 'none';
+      document.querySelector('.cart-footer').style.display = 'none';
+      const form = document.querySelector('[data-testid="checkout-form"]');
+      form.style.display = 'block';
+      form.querySelector('[data-testid="checkout-form-total"]').textContent = `$${cartData.total.toFixed(2)}`;
+      form.querySelector('[data-testid="checkout-name"]').value = '';
+      form.querySelector('[data-testid="checkout-email"]').value = '';
+      form.querySelector('[data-testid="checkout-address"]').value = '';
+    }
+
     async function performCheckout() {
+      const name = document.querySelector('[data-testid="checkout-name"]').value.trim();
+      const email = document.querySelector('[data-testid="checkout-email"]').value.trim();
+      const address = document.querySelector('[data-testid="checkout-address"]').value.trim();
+
+      if (!name || !email || !address) {
+        showToast('Please fill in all fields');
+        return;
+      }
+
+      const btn = document.querySelector('[data-testid="place-order-btn"]');
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
       try {
-        const res = await fetch('/api/checkout', { method: 'POST' });
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, address }),
+        });
         if (!res.ok) {
           const err = await res.json();
           showCheckoutError(err.error || `HTTP ${res.status}`);
@@ -896,12 +1042,16 @@
         await fetchCart();
       } catch (err) {
         showCheckoutError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Place Order';
       }
     }
 
     function showCheckoutConfirmation(order) {
       document.querySelector('[data-testid="cart-items"]').style.display = 'none';
       document.querySelector('.cart-footer').style.display = 'none';
+      document.querySelector('[data-testid="checkout-form"]').style.display = 'none';
       document.querySelector('[data-testid="checkout-error"]').style.display = 'none';
       const conf = document.querySelector('[data-testid="checkout-confirmation"]');
       conf.style.display = 'block';
@@ -912,6 +1062,7 @@
     function showCheckoutError(message) {
       document.querySelector('[data-testid="cart-items"]').style.display = 'none';
       document.querySelector('.cart-footer').style.display = 'none';
+      document.querySelector('[data-testid="checkout-form"]').style.display = 'none';
       document.querySelector('[data-testid="checkout-confirmation"]').style.display = 'none';
       const err = document.querySelector('[data-testid="checkout-error"]');
       err.style.display = 'block';
@@ -921,6 +1072,7 @@
     function resetCartDrawer() {
       document.querySelector('[data-testid="cart-items"]').style.display = '';
       document.querySelector('.cart-footer').style.display = '';
+      document.querySelector('[data-testid="checkout-form"]').style.display = 'none';
       document.querySelector('[data-testid="checkout-confirmation"]').style.display = 'none';
       document.querySelector('[data-testid="checkout-error"]').style.display = 'none';
     }
@@ -1030,7 +1182,9 @@
     cartBtn.addEventListener('click', () => { resetCartDrawer(); fetchCart().then(renderCartItems); cartDrawer.classList.add('open'); });
     document.querySelector('[data-testid="cart-close"]').addEventListener('click', () => { cartDrawer.classList.remove('open'); });
     document.querySelector('[data-testid="clear-cart-btn"]').addEventListener('click', clearCart);
-    document.querySelector('[data-testid="checkout-btn"]').addEventListener('click', performCheckout);
+    document.querySelector('[data-testid="checkout-btn"]').addEventListener('click', showCheckoutForm);
+    document.querySelector('[data-testid="place-order-btn"]').addEventListener('click', performCheckout);
+    document.querySelector('[data-testid="checkout-back-btn"]').addEventListener('click', () => { resetCartDrawer(); renderCartItems(); });
     document.querySelector('[data-testid="continue-shopping-btn"]').addEventListener('click', () => { resetCartDrawer(); cartDrawer.classList.remove('open'); });
     document.querySelector('[data-testid="checkout-retry-btn"]').addEventListener('click', () => { resetCartDrawer(); renderCartItems(); });
     document.querySelector('[data-testid="checkout-error-close-btn"]').addEventListener('click', () => { resetCartDrawer(); cartDrawer.classList.remove('open'); });

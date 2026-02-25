@@ -395,7 +395,7 @@ app.delete('/api/cart', (req, res) => {
 });
 
 // ── Checkout ─────────────────────────────────────────────────────
-const checkout = db.transaction(() => {
+const checkout = db.transaction((customer) => {
   if (cart.length === 0) {
     throw new Error('Cart is empty');
   }
@@ -421,17 +421,22 @@ const checkout = db.transaction(() => {
   total = Math.round(total * 100) / 100;
 
   const result = db.prepare(
-    'INSERT INTO orders (items, total, status) VALUES (?, ?, ?)'
-  ).run(JSON.stringify(orderItems), total, 'confirmed');
+    'INSERT INTO orders (items, total, status, customer) VALUES (?, ?, ?, ?)'
+  ).run(JSON.stringify(orderItems), total, 'confirmed', JSON.stringify(customer));
 
   cart = [];
 
-  return { orderId: result.lastInsertRowid, items: orderItems, total };
+  return { orderId: result.lastInsertRowid, items: orderItems, total, customer };
 });
 
 app.post('/api/checkout', (req, res) => {
   try {
-    const order = checkout();
+    const { name, email, address } = req.body || {};
+    if (!name || !email || !address) {
+      return res.status(400).json({ error: 'Name, email, and shipping address are required' });
+    }
+    const customer = { name, email, address };
+    const order = checkout(customer);
     res.status(201).json(order);
   } catch (err) {
     if (err.message === 'Cart is empty') {
@@ -450,7 +455,7 @@ app.get('/api/orders/:id', (req, res) => {
   if (!order) {
     return res.status(404).json({ error: 'Order not found' });
   }
-  res.json({ ...order, items: JSON.parse(order.items) });
+  res.json({ ...order, items: JSON.parse(order.items), customer: JSON.parse(order.customer) });
 });
 
 // ── Start server ────────────────────────────────────────────────────

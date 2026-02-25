@@ -19,6 +19,7 @@ db.exec(`
     items TEXT NOT NULL,
     total REAL NOT NULL,
     status TEXT NOT NULL DEFAULT 'confirmed',
+    customer TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);

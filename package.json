@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@checkly/playwright-reporter": "^1.5.0",
-    "@playwright/test": "^1.57.0"
+    "@playwright/test": "^1.57.0",
+    "checkly": "^7.2.0"
   }
 }

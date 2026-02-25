@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Checkout', () => {
+  // Cart is shared DB state — run serially to avoid race conditions
+  test.describe.configure({ mode: 'serial' });
   const BASE = 'http://localhost:3000';
 
   test.beforeEach(async ({ request }) => {

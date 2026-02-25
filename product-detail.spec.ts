@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Product Detail', () => {
+  test.beforeEach(async ({ request }) => {
+    // Clear cart to avoid stale badge counts from parallel tests
+    await request.delete('http://localhost:3000/api/cart');
+  });
   test('clicking a record card opens the detail modal', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('record-card').first()).toBeVisible();

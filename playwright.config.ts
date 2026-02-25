@@ -61,8 +61,8 @@ export default defineConfig({
   /* Retry on CI only — retried tests show as "flaky" in Checkly */
   retries: process.env.CI ? 2 : 0,
 
-  /* Parallel execution */
-  workers: process.env.CI ? '50%' : undefined,
+  /* Sequential execution — cart is shared DB state across all tests */
+  workers: 1,
 
   reporter: buildReporters(),
 

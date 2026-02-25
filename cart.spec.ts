@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Shopping Cart', () => {
+  // Cart is shared DB state — run serially to avoid race conditions
+  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ request }) => {
     // Clear cart before each test via API
     await request.delete('http://localhost:3000/api/cart');

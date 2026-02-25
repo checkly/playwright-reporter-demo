@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const db = require('./db');
+const { db, initSchema } = require('./db');
 
 const app = express();
 app.use(express.json());
@@ -283,14 +283,20 @@ const records = [
   },
 ];
 
-// ── Seed inventory from catalog on startup ───────────────────────
-const seedInventory = db.prepare(
-  'INSERT OR IGNORE INTO inventory (record_id, stock) VALUES (?, ?)'
-);
-const seedMany = db.transaction((records) => {
-  for (const r of records) seedInventory.run(r.id, r.stock);
+// ── Async init: schema + seed inventory ─────────────────────────────
+const ready = (async () => {
+  await initSchema();
+  const seedStmts = records.map((r) => ({
+    sql: 'INSERT OR IGNORE INTO inventory (record_id, stock) VALUES (?, ?)',
+    args: [r.id, r.stock],
+  }));
+  await db.batch(seedStmts, 'write');
+})();
+
+// Wait for init before handling any request
+app.use((req, res, next) => {
+  ready.then(() => next()).catch(next);
 });
-seedMany(records);
 
 // ── API Routes ──────────────────────────────────────────────────────
 
@@ -305,7 +311,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // List all records
-app.get('/api/records', (req, res) => {
+app.get('/api/records', async (req, res) => {
   const { q, genre, sort } = req.query;
 
   let results = [...records];
@@ -335,19 +341,20 @@ app.get('/api/records', (req, res) => {
   if (sort === 'newest') results.sort((a, b) => b.year - a.year);
 
   // Merge live stock from DB
-  const stockRows = db.prepare('SELECT record_id, stock FROM inventory').all();
+  const { rows: stockRows } = await db.execute({ sql: 'SELECT record_id, stock FROM inventory', args: [] });
   const stockMap = Object.fromEntries(stockRows.map((r) => [r.record_id, r.stock]));
   const withStock = results.map((r) => ({ ...r, stock: stockMap[r.id] ?? r.stock }));
   res.json(withStock);
 });
 
 // Get single record
-app.get('/api/records/:id', (req, res) => {
+app.get('/api/records/:id', async (req, res) => {
   const record = records.find((r) => r.id === parseInt(req.params.id));
   if (!record) {
     return res.status(404).json({ error: 'Record not found' });
   }
-  const inv = db.prepare('SELECT stock FROM inventory WHERE record_id = ?').get(record.id);
+  const { rows } = await db.execute({ sql: 'SELECT stock FROM inventory WHERE record_id = ?', args: [record.id] });
+  const inv = rows[0];
   res.json({ ...record, stock: inv ? inv.stock : record.stock });
 });
 
@@ -357,13 +364,13 @@ app.get('/api/genres', (req, res) => {
   res.json(genres);
 });
 
-// Cart (in-memory, resets on restart)
-let cart = [];
+// ── Cart (persisted in DB for serverless compatibility) ─────────────
 
-app.get('/api/cart', (req, res) => {
-  const items = cart.map((item) => {
-    const record = records.find((r) => r.id === item.recordId);
-    return { ...item, record };
+app.get('/api/cart', async (req, res) => {
+  const { rows: cartRows } = await db.execute({ sql: 'SELECT record_id, quantity FROM cart', args: [] });
+  const items = cartRows.map((row) => {
+    const record = records.find((r) => r.id === row.record_id);
+    return { recordId: row.record_id, quantity: row.quantity, record };
   });
   const total = items.reduce(
     (sum, item) => sum + (item.record?.price ?? 0) * item.quantity,
@@ -372,72 +379,78 @@ app.get('/api/cart', (req, res) => {
   res.json({ items, total: Math.round(total * 100) / 100, count: items.length });
 });
 
-app.post('/api/cart', (req, res) => {
+app.post('/api/cart', async (req, res) => {
   const { recordId, quantity = 1 } = req.body;
   const record = records.find((r) => r.id === recordId);
   if (!record) {
     return res.status(404).json({ error: 'Record not found' });
   }
 
-  const existing = cart.find((item) => item.recordId === recordId);
-  if (existing) {
-    existing.quantity += quantity;
-  } else {
-    cart.push({ recordId, quantity });
-  }
+  await db.execute({
+    sql: `INSERT INTO cart (record_id, quantity) VALUES (?, ?)
+          ON CONFLICT(record_id) DO UPDATE SET quantity = quantity + excluded.quantity`,
+    args: [recordId, quantity],
+  });
 
   res.status(201).json({ message: 'Added to cart', recordId, quantity });
 });
 
-app.delete('/api/cart', (req, res) => {
-  cart = [];
+app.delete('/api/cart', async (req, res) => {
+  await db.execute({ sql: 'DELETE FROM cart', args: [] });
   res.json({ message: 'Cart cleared' });
 });
 
 // ── Checkout ─────────────────────────────────────────────────────
-const checkout = db.transaction((customer) => {
-  if (cart.length === 0) {
-    throw new Error('Cart is empty');
-  }
-
-  const orderItems = [];
-  let total = 0;
-
-  for (const item of cart) {
-    const record = records.find((r) => r.id === item.recordId);
-    if (!record) throw new Error(`Record ${item.recordId} not found`);
-
-    const inv = db.prepare('SELECT stock FROM inventory WHERE record_id = ?').get(item.recordId);
-    if (!inv || inv.stock < item.quantity) {
-      throw new Error(`Insufficient stock for "${record.title}"`);
-    }
-
-    db.prepare('UPDATE inventory SET stock = stock - ? WHERE record_id = ?').run(item.quantity, item.recordId);
-    const lineTotal = record.price * item.quantity;
-    orderItems.push({ recordId: item.recordId, title: record.title, quantity: item.quantity, price: record.price });
-    total += lineTotal;
-  }
-
-  total = Math.round(total * 100) / 100;
-
-  const result = db.prepare(
-    'INSERT INTO orders (items, total, status, customer) VALUES (?, ?, ?, ?)'
-  ).run(JSON.stringify(orderItems), total, 'confirmed', JSON.stringify(customer));
-
-  cart = [];
-
-  return { orderId: result.lastInsertRowid, items: orderItems, total, customer };
-});
-
-app.post('/api/checkout', (req, res) => {
+app.post('/api/checkout', async (req, res) => {
   try {
     const { name, email, address } = req.body || {};
     if (!name || !email || !address) {
       return res.status(400).json({ error: 'Name, email, and shipping address are required' });
     }
+
+    // Read cart
+    const { rows: cartItems } = await db.execute({ sql: 'SELECT record_id, quantity FROM cart', args: [] });
+    if (cartItems.length === 0) {
+      return res.status(400).json({ error: 'Cart is empty' });
+    }
+
+    // Validate stock and build order
+    const orderItems = [];
+    let total = 0;
+
+    for (const item of cartItems) {
+      const record = records.find((r) => r.id === item.record_id);
+      if (!record) throw new Error(`Record ${item.record_id} not found`);
+
+      const { rows } = await db.execute({ sql: 'SELECT stock FROM inventory WHERE record_id = ?', args: [item.record_id] });
+      const inv = rows[0];
+      if (!inv || inv.stock < item.quantity) {
+        throw new Error(`Insufficient stock for "${record.title}"`);
+      }
+
+      orderItems.push({ recordId: item.record_id, title: record.title, quantity: item.quantity, price: record.price });
+      total += record.price * item.quantity;
+    }
+
+    total = Math.round(total * 100) / 100;
     const customer = { name, email, address };
-    const order = checkout(customer);
-    res.status(201).json(order);
+
+    // Atomic write: decrement stock, insert order, clear cart
+    const writeStmts = cartItems.map((item) => ({
+      sql: 'UPDATE inventory SET stock = stock - ? WHERE record_id = ?',
+      args: [item.quantity, item.record_id],
+    }));
+    writeStmts.push({
+      sql: 'INSERT INTO orders (items, total, status, customer) VALUES (?, ?, ?, ?)',
+      args: [JSON.stringify(orderItems), total, 'confirmed', JSON.stringify(customer)],
+    });
+    writeStmts.push({ sql: 'DELETE FROM cart', args: [] });
+
+    const results = await db.batch(writeStmts, 'write');
+    // Order insert is the second-to-last statement
+    const orderResult = results[results.length - 2];
+
+    res.status(201).json({ orderId: Number(orderResult.lastInsertRowid), items: orderItems, total, customer });
   } catch (err) {
     if (err.message === 'Cart is empty') {
       return res.status(400).json({ error: err.message });
@@ -450,8 +463,9 @@ app.post('/api/checkout', (req, res) => {
   }
 });
 
-app.get('/api/orders/:id', (req, res) => {
-  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(parseInt(req.params.id));
+app.get('/api/orders/:id', async (req, res) => {
+  const { rows } = await db.execute({ sql: 'SELECT * FROM orders WHERE id = ?', args: [parseInt(req.params.id)] });
+  const order = rows[0];
   if (!order) {
     return res.status(404).json({ error: 'Order not found' });
   }
@@ -461,12 +475,14 @@ app.get('/api/orders/:id', (req, res) => {
 // ── Start server ────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 
-// Export for programmatic use
-module.exports = { app, db, resetCart: () => { cart = []; } };
+// Export app for Vercel's @vercel/node
+module.exports = app;
 
-// Start if run directly
+// Start if run directly (local dev)
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`🦝 Raccoon Records running at http://localhost:${PORT}`);
+  ready.then(() => {
+    app.listen(PORT, () => {
+      console.log(`🦝 Raccoon Records running at http://localhost:${PORT}`);
+    });
   });
 }

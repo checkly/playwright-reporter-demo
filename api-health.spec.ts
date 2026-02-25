@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('API Health', () => {
+  // Cart test mutates shared DB state — run serially to avoid races
+  test.describe.configure({ mode: 'serial' });
   const BASE = 'http://localhost:3000';
 
   test('GET /api/health returns healthy status', async ({ request }) => {

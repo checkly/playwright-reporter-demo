@@ -394,11 +394,70 @@ app.delete('/api/cart', (req, res) => {
   res.json({ message: 'Cart cleared' });
 });
 
+// ── Checkout ─────────────────────────────────────────────────────
+const checkout = db.transaction(() => {
+  if (cart.length === 0) {
+    throw new Error('Cart is empty');
+  }
+
+  const orderItems = [];
+  let total = 0;
+
+  for (const item of cart) {
+    const record = records.find((r) => r.id === item.recordId);
+    if (!record) throw new Error(`Record ${item.recordId} not found`);
+
+    const inv = db.prepare('SELECT stock FROM inventory WHERE record_id = ?').get(item.recordId);
+    if (!inv || inv.stock < item.quantity) {
+      throw new Error(`Insufficient stock for "${record.title}"`);
+    }
+
+    db.prepare('UPDATE inventory SET stock = stock - ? WHERE record_id = ?').run(item.quantity, item.recordId);
+    const lineTotal = record.price * item.quantity;
+    orderItems.push({ recordId: item.recordId, title: record.title, quantity: item.quantity, price: record.price });
+    total += lineTotal;
+  }
+
+  total = Math.round(total * 100) / 100;
+
+  const result = db.prepare(
+    'INSERT INTO orders (items, total, status) VALUES (?, ?, ?)'
+  ).run(JSON.stringify(orderItems), total, 'confirmed');
+
+  cart = [];
+
+  return { orderId: result.lastInsertRowid, items: orderItems, total };
+});
+
+app.post('/api/checkout', (req, res) => {
+  try {
+    const order = checkout();
+    res.status(201).json(order);
+  } catch (err) {
+    if (err.message === 'Cart is empty') {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err.message.startsWith('Insufficient stock')) {
+      return res.status(409).json({ error: err.message });
+    }
+    console.error('Checkout failed:', err.message);
+    res.status(503).json({ error: 'Checkout service unavailable. Please try again.' });
+  }
+});
+
+app.get('/api/orders/:id', (req, res) => {
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(parseInt(req.params.id));
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+  res.json({ ...order, items: JSON.parse(order.items) });
+});
+
 // ── Start server ────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 
 // Export for programmatic use
-module.exports = { app, resetCart: () => { cart = []; } };
+module.exports = { app, db, resetCart: () => { cart = []; } };
 
 // Start if run directly
 if (require.main === module) {

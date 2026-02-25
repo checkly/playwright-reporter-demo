@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const db = require('./db');
 
 const app = express();
 app.use(express.json());
@@ -282,6 +283,15 @@ const records = [
   },
 ];
 
+// ── Seed inventory from catalog on startup ───────────────────────
+const seedInventory = db.prepare(
+  'INSERT OR IGNORE INTO inventory (record_id, stock) VALUES (?, ?)'
+);
+const seedMany = db.transaction((records) => {
+  for (const r of records) seedInventory.run(r.id, r.stock);
+});
+seedMany(records);
+
 // ── API Routes ──────────────────────────────────────────────────────
 
 // Health check
@@ -324,7 +334,11 @@ app.get('/api/records', (req, res) => {
   if (sort === 'rating') results.sort((a, b) => b.rating - a.rating);
   if (sort === 'newest') results.sort((a, b) => b.year - a.year);
 
-  res.json(results);
+  // Merge live stock from DB
+  const stockRows = db.prepare('SELECT record_id, stock FROM inventory').all();
+  const stockMap = Object.fromEntries(stockRows.map((r) => [r.record_id, r.stock]));
+  const withStock = results.map((r) => ({ ...r, stock: stockMap[r.id] ?? r.stock }));
+  res.json(withStock);
 });
 
 // Get single record
@@ -333,7 +347,8 @@ app.get('/api/records/:id', (req, res) => {
   if (!record) {
     return res.status(404).json({ error: 'Record not found' });
   }
-  res.json(record);
+  const inv = db.prepare('SELECT stock FROM inventory WHERE record_id = ?').get(record.id);
+  res.json({ ...record, stock: inv ? inv.stock : record.stock });
 });
 
 // Get genres

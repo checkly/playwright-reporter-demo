@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Product Detail', () => {
+test.describe('Product Detail @monitor', () => {
+  const BASE = process.env.ENVIRONMENT_URL || '';
+  test.beforeEach(async ({ request }) => {
+    // Clear cart to avoid stale badge counts from parallel tests
+    await request.delete(`${BASE}/api/cart`);
+  });
   test('clicking a record card opens the detail modal', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('record-card').first().click();
@@ -13,7 +18,7 @@ test.describe('Product Detail', () => {
   });
 
   test('modal displays all record details', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('record-card').first().click();
@@ -29,7 +34,7 @@ test.describe('Product Detail', () => {
   });
 
   test('close button dismisses the modal', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('record-card').first().click();
@@ -40,7 +45,7 @@ test.describe('Product Detail', () => {
   });
 
   test('clicking outside the modal dismisses it', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('record-card').first().click();
@@ -51,7 +56,7 @@ test.describe('Product Detail', () => {
   });
 
   test('add to cart from modal updates the cart badge', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('record-card').first().click();

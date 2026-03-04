@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Homepage', () => {
+test.describe('Homepage @monitor', () => {
+  const BASE = process.env.ENVIRONMENT_URL || '';
   test('loads with correct title and branding', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     await expect(page).toHaveTitle(/Raccoon Records/);
 
@@ -12,7 +13,7 @@ test.describe('Homepage', () => {
   });
 
   test('displays the record catalog', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     const grid = page.getByTestId('record-grid');
     const cards = grid.getByTestId('record-card');
@@ -23,7 +24,7 @@ test.describe('Homepage', () => {
   });
 
   test('each record card shows title, artist, and price', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     const firstCard = page.getByTestId('record-card').first();
     await expect(firstCard).toBeVisible();
@@ -34,7 +35,7 @@ test.describe('Homepage', () => {
   });
 
   test('shows genre filter buttons', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     const filters = page.getByTestId('genre-filters');
     await expect(filters).toBeVisible();
@@ -43,12 +44,13 @@ test.describe('Homepage', () => {
     await expect(allBtn).toHaveClass(/active/);
 
     const buttons = filters.locator('.filter-btn');
-    const count = await buttons.count();
-    expect(count).toBeGreaterThan(1);
+    await expect
+      .poll(async () => buttons.count(), { timeout: 15_000 })
+      .toBeGreaterThan(1);
   });
 
   test('cart button is visible with empty badge', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`${BASE}/`);
 
     const cartBtn = page.getByTestId('cart-button');
     await expect(cartBtn).toBeVisible();

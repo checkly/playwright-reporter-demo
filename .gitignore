@@ -4,3 +4,6 @@ playwright-report/
 blob-report/
 .env
 *.zip
+raccoon.db*
+.vercel
+.env*.local

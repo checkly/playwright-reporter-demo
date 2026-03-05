@@ -30,7 +30,7 @@
   "dependencies": {
     "@libsql/client": "^0.17.0",
     "better-sqlite3": "^12.6.2",
-    "checkly": "file:../monorepo/apps/checkly-cli/packages/cli",
+    "checkly": "^7.5.0",
     "express": "^4.21.0"
   },
   "devDependencies": {

@@ -344,7 +344,7 @@ app.get('/api/records', async (req, res) => {
   const { rows: stockRows } = await db.execute({ sql: 'SELECT record_id, stock FROM inventory', args: [] });
   const stockMap = Object.fromEntries(stockRows.map((r) => [r.record_id, r.stock]));
   const withStock = results.map((r) => ({ ...r, stock: stockMap[r.id] ?? r.stock }));
-  res.json({ data: withStock, meta: { total: withStock.length } });
+  res.json(withStock);
 });
 
 // Get single record

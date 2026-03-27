@@ -77,7 +77,7 @@ export default defineConfig({
      * No traces = no console/network data in Checkly. */
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    trace: 'retain-on-failure',
+    trace: 'on',
 
     /* Browser settings */
     actionTimeout: 15_000,

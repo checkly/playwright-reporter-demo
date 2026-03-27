@@ -56,5 +56,5 @@ jobs:
         if: failure()
         with:
           name: snapshot-updates
-          path: tests/**/*-snapshots/
+          path: "**/*-snapshots/"
           retention-days: 7

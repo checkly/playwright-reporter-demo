@@ -28,14 +28,14 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@libsql/client": "^0.17.0",
-    "better-sqlite3": "^12.6.2",
+    "@libsql/client": "^0.17.2",
+    "better-sqlite3": "^12.8.0",
     "express": "^4.21.0"
   },
   "devDependencies": {
-    "@checkly/playwright-reporter": "^1.5.0",
-    "@playwright/test": "^1.57.0",
-    "checkly": "^7.5.5",
+    "@checkly/playwright-reporter": "^1.8.0",
+    "@playwright/test": "^1.58.2",
+    "checkly": "^7.7.0",
     "ts-node": "^10.9.2"
   }
 }

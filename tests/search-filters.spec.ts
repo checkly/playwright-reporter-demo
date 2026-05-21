@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Search & Filters @monitor', () => {
+test.describe('Search & Filters @monitor @search', () => {
   const BASE = process.env.ENVIRONMENT_URL || '';
   test('search filters records by title', async ({ page }) => {
     await page.goto(`${BASE}/`);

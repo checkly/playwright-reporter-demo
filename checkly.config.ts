@@ -1,5 +1,14 @@
-import { defineConfig } from 'checkly'
-import { Frequency } from 'checkly/constructs'
+import { defineConfig } from 'checkly';
+import { EmailAlertChannel, Frequency } from 'checkly/constructs';
+
+const TARGET_URL = 'https://raccoon-records.vercel.app';
+
+const emailAlert = new EmailAlertChannel('default-email-alert', {
+  address: 'maria@checkly.com',
+  sendFailure: true,
+  sendRecovery: true,
+  sendDegraded: false,
+});
 
 export default defineConfig({
   projectName: 'Raccoon Records',
@@ -7,36 +16,31 @@ export default defineConfig({
   repoUrl: 'https://github.com/checkly/playwright-reporter-demo',
   checks: {
     playwrightConfigPath: './playwright.config.ts',
-    locations: ['us-east-1', 'eu-west-1', 'ap-southeast-1'],
-    tags: ['raccoon-records', 'demo'],
+    locations: ['eu-west-1', 'us-east-1'],
+    alertChannels: [emailAlert],
+    environmentVariables: [{ key: 'ENVIRONMENT_URL', value: TARGET_URL }],
+
     playwrightChecks: [
       {
         name: 'API Health',
         logicalId: 'api-health',
-        pwProjects: ['checkly'],
-        testCommand: 'npx playwright test api-health.spec.ts --project checkly',
-        frequency: Frequency.EVERY_10M,
+        pwProjects: ['chromium'],
+        pwTags: ['@api'],
+        frequency: Frequency.EVERY_5M,
       },
       {
-        name: 'Homepage',
-        logicalId: 'homepage',
-        pwProjects: ['checkly'],
-        testCommand: 'npx playwright test homepage.spec.ts --project checkly',
-        frequency: Frequency.EVERY_10M,
-      },
-      {
-        name: 'Product Detail',
-        logicalId: 'product-detail',
-        pwProjects: ['checkly'],
-        testCommand: 'npx playwright test product-detail.spec.ts --project checkly',
-        frequency: Frequency.EVERY_10M,
+        name: 'Core UI — Homepage & Product Detail',
+        logicalId: 'core-ui',
+        pwProjects: ['chromium'],
+        pwTags: ['@core'],
+        frequency: Frequency.EVERY_5M,
       },
       {
         name: 'Search & Filters',
         logicalId: 'search-filters',
-        pwProjects: ['checkly'],
-        testCommand: 'npx playwright test search-filters.spec.ts --project checkly',
-        frequency: Frequency.EVERY_10M,
+        pwProjects: ['chromium'],
+        pwTags: ['@search'],
+        frequency: Frequency.EVERY_5M,
       },
     ],
   },
@@ -44,4 +48,4 @@ export default defineConfig({
     runLocation: 'eu-west-1',
     retries: 0,
   },
-})
+});

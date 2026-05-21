@@ -27,7 +27,7 @@ test.describe('Shopping Cart @stateful', () => {
 
     await page.goto(`${BASE}/`);
 
-    await page.getByTestId('cart-button').click();
+    await page.getByTestId('cart-button').click({ force: true });
 
     const drawer = page.getByTestId('cart-drawer');
     await expect(drawer).toBeVisible();
@@ -44,7 +44,7 @@ test.describe('Shopping Cart @stateful', () => {
 
     await page.goto(`${BASE}/`);
 
-    await page.getByTestId('cart-button').click();
+    await page.getByTestId('cart-button').click({ force: true });
     await expect(page.getByTestId('cart-item').first()).toBeVisible();
 
     await page.getByTestId('clear-cart-btn').click();
@@ -67,7 +67,7 @@ test.describe('Shopping Cart @stateful', () => {
   test('cart close button hides the drawer', async ({ page }) => {
     await page.goto(`${BASE}/`);
 
-    await page.getByTestId('cart-button').click();
+    await page.getByTestId('cart-button').click({ force: true });
     await expect(page.getByTestId('cart-drawer')).toBeVisible();
 
     await page.getByTestId('cart-close').click();

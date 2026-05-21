@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "node server.js",
     "test": "npx playwright test",
-    "test:monitor": "npx playwright test --project=checkly",
+    "test:monitor": "npx playwright test --project=chromium --grep @monitor --grep-invert \"@stateful|@destructive|@visual\"",
     "test:chromium": "npx playwright test --project=chromium",
+    "test:visual": "npx playwright test --project=chromium --grep @visual",
     "test:headed": "npx playwright test --headed --project=chromium",
     "test:debug": "npx playwright test --debug --project=chromium",
     "test:ui": "npx playwright test --ui",
@@ -33,9 +34,11 @@
     "express": "^4.21.0"
   },
   "devDependencies": {
-    "@checkly/playwright-reporter": "^1.8.0",
+    "@checkly/playwright-reporter": "^1.10.0",
     "@playwright/test": "^1.58.2",
-    "checkly": "^7.7.0",
+    "checkly": "^7.15.0",
+    "dotenv": "^17.4.2",
+    "jit": "^0.1.1",
     "ts-node": "^10.9.2"
   }
 }

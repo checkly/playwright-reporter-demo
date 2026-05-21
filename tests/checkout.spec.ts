@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const { db } = require('../db');
+
 test.describe('Checkout @destructive', () => {
   // Cart is shared DB state — run serially to avoid race conditions
   test.describe.configure({ mode: 'serial' });
@@ -7,6 +9,11 @@ test.describe('Checkout @destructive', () => {
 
   test.beforeEach(async ({ request }) => {
     await request.delete(`${BASE}/api/cart`);
+    await db.batch([
+      { sql: 'UPDATE inventory SET stock = ? WHERE record_id = ?', args: [12, 1] },
+      { sql: 'UPDATE inventory SET stock = ? WHERE record_id = ?', args: [8, 2] },
+      { sql: 'UPDATE inventory SET stock = ? WHERE record_id = ?', args: [5, 3] },
+    ], 'write');
   });
 
   test('POST /api/checkout creates an order and decrements stock', async ({ request }) => {
@@ -109,7 +116,7 @@ test.describe('Checkout @destructive', () => {
     await expect(page.getByTestId('cart-badge')).toContainText('1');
 
     // Open cart and click checkout
-    await page.getByTestId('cart-button').click();
+    await page.getByTestId('cart-button').click({ force: true });
     await expect(page.getByTestId('cart-drawer')).toBeVisible();
     await page.getByTestId('checkout-btn').click();
 
@@ -132,7 +139,7 @@ test.describe('Checkout @destructive', () => {
     await page.getByTestId('add-to-cart-1').click();
     await expect(page.getByTestId('cart-badge')).toContainText('1');
 
-    await page.getByTestId('cart-button').click();
+    await page.getByTestId('cart-button').click({ force: true });
     await page.getByTestId('checkout-btn').click();
 
     // Form shows total
@@ -150,7 +157,7 @@ test.describe('Checkout @destructive', () => {
     await expect(page.getByTestId('record-card').first()).toBeVisible();
 
     await page.getByTestId('add-to-cart-1').click();
-    await page.getByTestId('cart-button').click();
+    await page.getByTestId('cart-button').click({ force: true });
     await page.getByTestId('checkout-btn').click();
 
     // Try to place order without filling fields

@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('API Health @monitor', () => {
-  // Cart test mutates shared DB state — run serially to avoid races
-  test.describe.configure({ mode: 'serial' });
-  const BASE = process.env.ENVIRONMENT_URL || '';
+const BASE = process.env.ENVIRONMENT_URL || '';
 
+test.describe('API Health @monitor @api', () => {
   test('GET /api/health returns healthy status', async ({ request }) => {
     const response = await request.get(`${BASE}/api/health`);
 
@@ -98,6 +96,19 @@ test.describe('API Health @monitor', () => {
     expect(genres).toEqual(sorted);
   });
 
+  test('API responds within acceptable latency', async ({ request }) => {
+    const start = Date.now();
+    const response = await request.get(`${BASE}/api/records`);
+    const duration = Date.now() - start;
+
+    expect(response.status()).toBe(200);
+    expect(duration).toBeLessThan(1000);
+  });
+});
+
+test.describe('API Cart @stateful', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('POST /api/cart adds item and GET /api/cart retrieves it', async ({ request }) => {
     await request.delete(`${BASE}/api/cart`);
 
@@ -114,14 +125,5 @@ test.describe('API Health @monitor', () => {
     expect(cart.items[0].recordId).toBe(3);
     expect(cart.items[0].quantity).toBe(2);
     expect(cart.total).toBeCloseTo(63.98, 1);
-  });
-
-  test('API responds within acceptable latency', async ({ request }) => {
-    const start = Date.now();
-    const response = await request.get(`${BASE}/api/records`);
-    const duration = Date.now() - start;
-
-    expect(response.status()).toBe(200);
-    expect(duration).toBeLessThan(1000);
   });
 });

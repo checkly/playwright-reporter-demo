@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Homepage @monitor', () => {
+test.describe('Homepage @monitor @core', () => {
   const BASE = process.env.ENVIRONMENT_URL || '';
   test('loads with correct title and branding', async ({ page }) => {
     await page.goto(`${BASE}/`);

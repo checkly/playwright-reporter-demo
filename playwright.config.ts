@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -14,10 +15,22 @@ import { defineConfig, devices } from '@playwright/test';
  */
 
 const isChecklyRuntime = !!process.env.CHECKLY;
+const LOCAL_BASE_URL = 'http://localhost:3000';
+const CHECKLY_BASE_URL = 'https://raccoon-records.vercel.app';
+const baseURL = process.env.ENVIRONMENT_URL || (isChecklyRuntime ? CHECKLY_BASE_URL : LOCAL_BASE_URL);
 
 /* ── Reporters ─────────────────────────────────────────────── */
 function buildReporters() {
   if (isChecklyRuntime) return [];
+
+  const reporters = [
+    // HTML report for local browsing (npx playwright show-report)
+    ['html', { open: 'never' }],
+  ];
+
+  if (!process.env.CHECKLY_API_KEY || !process.env.CHECKLY_ACCOUNT_ID) {
+    return reporters;
+  }
 
   const { createChecklyReporter } = require('@checkly/playwright-reporter');
   return [
@@ -46,20 +59,18 @@ function buildReporters() {
       // Debug mode for troubleshooting uploads
       verbose: !!process.env.CHECKLY_REPORTER_VERBOSE,
     }),
-
-    // HTML report for local browsing (npx playwright show-report)
-    ['html', { open: 'never' }],
+    ...reporters,
   ];
 }
 
 export default defineConfig({
-  testDir: './',
+  testDir: './tests',
 
   /* Fail the build on CI if test.only was left in source code */
   forbidOnly: !!process.env.CI,
 
-  /* Retry on CI only — retried tests show as "flaky" in Checkly */
-  retries: process.env.CI ? 2 : 0,
+  /* Retry on CI and Checkly runtime — retried tests show as "flaky" in Checkly */
+  retries: process.env.CI || isChecklyRuntime ? 2 : 0,
 
   /* Sequential execution — cart is shared DB state across all tests */
   workers: 1,
@@ -70,7 +81,7 @@ export default defineConfig({
   use: {
     /* Base URL — tests use relative paths like page.goto('/')
      * ENVIRONMENT_URL is set in Checkly for monitoring checks. */
-    baseURL: process.env.ENVIRONMENT_URL || 'http://localhost:3000',
+    baseURL,
 
     /* ---- Asset capture settings ----
      * These control what the Checkly Reporter can upload.
@@ -97,14 +108,6 @@ export default defineConfig({
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'checkly',
-      use: { ...devices['Desktop Chrome'] },
-      // Monitoring mode: select monitor-tagged tests only.
-      grep: /@monitor/,
-      // Defense in depth: never run risky/stateful suites in monitoring.
-      grepInvert: /@destructive|@stateful|@visual/,
     },
   ],
 

@@ -16,7 +16,7 @@ It ships with its own demo app (**Raccoon Records**, a vinyl shop) and a full Pl
 | Feature | Description |
 |---|---|
 | **Test Sessions dashboard** | Pass/fail results, screenshots, videos, and Playwright traces uploaded after every run |
-| **Synthetic monitoring** | Four Playwright Check Suites run `@monitor` tests every 10 minutes from three regions |
+| **Synthetic monitoring** | Three Playwright Check Suites run production-safe `@monitor` tests every 10 minutes from two regions |
 | **Console and network data** | Extracted from Playwright traces automatically — no extra configuration |
 | **Git context** | Branch, commit SHA, and author auto-detected from CI or local repo |
 | **Secret scrubbing** | API keys and tokens redacted before upload |
@@ -60,13 +60,14 @@ Open the session URL printed in your terminal to view results in the [Checkly Te
 ├── server.js                      # Express API (records, cart, checkout, search)
 ├── db.js                          # Database adapter (SQLite local, Turso production)
 ├── index.html                     # Raccoon Records — vinyl shop frontend
-├── api-health.spec.ts             # API endpoint validation
-├── homepage.spec.ts               # Page load, catalog, filters, cart button
-├── product-detail.spec.ts         # Modal open/close, detail display
-├── search-filters.spec.ts         # Search input, genre filters, empty states
-├── cart.spec.ts                   # Add to cart, clear, badge updates
-├── checkout.spec.ts               # Order creation, stock decrement
-├── visual-regression.spec.ts      # Screenshot comparison baselines
+├── tests/
+│   ├── api-health.spec.ts         # API endpoint validation
+│   ├── homepage.spec.ts           # Page load, catalog, filters, cart button
+│   ├── product-detail.spec.ts     # Modal open/close, detail display
+│   ├── search-filters.spec.ts     # Search input, genre filters, empty states
+│   ├── cart.spec.ts               # Add to cart, clear, badge updates
+│   ├── checkout.spec.ts           # Order creation, stock decrement
+│   └── visual-regression.spec.ts  # Screenshot comparison baselines
 ├── playwright.config.ts           # Playwright config with reporter and projects
 ├── checkly.config.ts              # Checkly Check Suite definitions
 ├── vercel.json                    # Vercel deployment config
@@ -92,15 +93,15 @@ Run it standalone with `npm run dev` and visit `http://localhost:3000`.
 
 | Test file | Tag | Tests | What it covers |
 |---|---|---|---|
-| `api-health.spec.ts` | `@monitor` | 8 | API health, catalog, search, genres, cart round-trip, latency |
-| `homepage.spec.ts` | `@monitor` | 5 | Page load, title, catalog grid, genre filters, cart button |
-| `product-detail.spec.ts` | `@monitor` | 5 | Modal open/close, record details, add-to-cart from modal |
-| `search-filters.spec.ts` | `@monitor` | 5 | Title search, artist search, empty state, genre filter, reset |
-| `cart.spec.ts` | `@stateful` | 6 | Add to cart, drawer, clear cart, badge updates, close button |
-| `checkout.spec.ts` | `@destructive` | 9 | Order creation, stock changes, validation, full UI checkout |
-| `visual-regression.spec.ts` | `@visual` | 3 | Full-page and component screenshot comparisons |
+| `tests/api-health.spec.ts` | `@monitor @api`, `@stateful` | 9 | API health, catalog, search, genres, cart round-trip, latency |
+| `tests/homepage.spec.ts` | `@monitor @core` | 5 | Page load, title, catalog grid, genre filters, cart button |
+| `tests/product-detail.spec.ts` | `@monitor @core` | 5 | Modal open/close, record details, add-to-cart from modal |
+| `tests/search-filters.spec.ts` | `@monitor @search` | 5 | Title search, artist search, empty state, genre filter, reset |
+| `tests/cart.spec.ts` | `@stateful` | 5 | Add to cart, drawer, clear cart, badge updates, close button |
+| `tests/checkout.spec.ts` | `@destructive` | 9 | Order creation, stock changes, validation, full UI checkout |
+| `tests/visual-regression.spec.ts` | `@visual` | 3 | Full-page and component screenshot comparisons |
 
-**Total:** 42 tests across 7 files and 4 Playwright projects (`chromium`, `firefox`, `mobile-chrome`, `checkly`).
+**Total:** 41 tests across 7 files. Playwright projects represent runtime coverage only: `chromium`, `firefox`, and `mobile-chrome`.
 
 ### Monitoring vs. E2E strategy
 
@@ -108,29 +109,31 @@ Test intent tags separate monitoring-safe tests from full E2E flows. Both share 
 
 | Tag | Purpose | Included in monitoring |
 |---|---|---|
-| `@monitor` | Stable, non-destructive, read-only checks | Yes |
+| `@monitor` | Stable, non-destructive checks | Yes |
+| `@api` | API health and contract checks | Yes, in the API Health suite |
+| `@core` | Critical homepage and product-detail UX | Yes, in the Core UI suite |
+| `@search` | Search and filtering UX | Yes, in the Search & Filters suite |
 | `@stateful` | Mutates shared app state (cart operations) | No |
 | `@destructive` | Creates irreversible state (orders, stock changes) | No |
 | `@visual` | Screenshot comparison baselines | No |
 
-The `checkly` Playwright project runs only `@monitor` tests and explicitly excludes `@destructive`, `@stateful`, and `@visual` tags through `grep` / `grepInvert`.
+Playwright projects stay focused on runtime coverage. Local monitoring runs use `--grep @monitor`, while deployed Checkly suites use `pwTags` to select `@api`, `@core`, or `@search` from the same test files.
 
 ---
 
 ## Checkly Playwright Check Suites
 
-This repo defines four [Playwright Check Suites](https://www.checklyhq.com/docs/detect/synthetic-monitoring/playwright-checks/) in `checkly.config.ts`. Each suite runs a subset of `@monitor` tests as continuous synthetic monitoring.
+This repo defines three [Playwright Check Suites](https://www.checklyhq.com/docs/detect/synthetic-monitoring/playwright-checks/) in `checkly.config.ts`. Each suite runs a tagged subset of production-safe tests as continuous synthetic monitoring.
 
 | Check Suite | Test file | Tests | Description |
 |---|---|---|---|
-| **API Health** | `api-health.spec.ts` | 8 | API endpoints, response schemas, latency |
-| **Homepage** | `homepage.spec.ts` | 5 | Page load, catalog rendering, genre filters |
-| **Product Detail** | `product-detail.spec.ts` | 5 | Modal interactions, record details |
-| **Search & Filters** | `search-filters.spec.ts` | 5 | Search input, genre filtering, empty states |
+| **API Health** | `@api` | 8 | API endpoints, response schemas, latency |
+| **Core UI — Homepage & Product Detail** | `@core` | 10 | Page load, catalog rendering, modal interactions |
+| **Search & Filters** | `@search` | 5 | Search input, genre filtering, empty states |
 
-**Schedule:** Every 10 minutes from `us-east-1`, `eu-west-1`, and `ap-southeast-1`.
+**Schedule:** Every 10 minutes from `eu-west-1` and `us-east-1`.
 
-All four suites reference the `checkly` Playwright project through `pwProjects: ['checkly']`, which applies the `@monitor` tag filter automatically.
+All suites reuse the regular `chromium` Playwright project and select their test group with `pwTags`. This keeps browser/device concerns in Playwright and monitoring grouping in Checkly.
 
 ### How it works
 
@@ -146,12 +149,13 @@ export default defineConfig({
   logicalId: 'raccoon-records',
   checks: {
     playwrightConfigPath: './playwright.config.ts',
-    locations: ['us-east-1', 'eu-west-1', 'ap-southeast-1'],
+    locations: ['eu-west-1', 'us-east-1'],
     playwrightChecks: [
       {
-        name: 'Homepage',
-        logicalId: 'homepage',
-        pwProjects: ['checkly'],
+        name: 'Core UI — Homepage & Product Detail',
+        logicalId: 'core-ui',
+        pwProjects: ['chromium'],
+        pwTags: ['@core'],
         frequency: Frequency.EVERY_10M,
       },
       // ... more check suites
@@ -213,25 +217,14 @@ use: {
 
 ## CI/CD
 
-Two GitHub Actions workflows automate testing and deployment:
+Add these secrets to your CI provider before running Playwright with the Checkly reporter or deploying checks:
 
-### Playwright Tests → Checkly (`.github/workflows/playwright.yml`)
+| Secret | Purpose |
+|---|---|
+| `CHECKLY_API_KEY` | Authenticates with the Checkly API |
+| `CHECKLY_ACCOUNT_ID` | Identifies the Checkly account |
 
-Runs on every push and PR to `main`. Installs Chromium, executes the Playwright test suite, uploads results to Checkly Test Sessions via the reporter, and saves HTML reports and snapshot diffs as artifacts.
-
-### Checkly Deploy (`.github/workflows/checkly.yml`)
-
-- **On PRs to `main`:** validates Check Suites with `checkly test --record` against the production URL.
-- **On merge to `main`:** deploys Check Suites to Checkly with `checkly deploy --force`.
-
-### Required GitHub Secrets
-
-| Secret | Used by | Purpose |
-|---|---|---|
-| `CHECKLY_API_KEY` | Both workflows | Authenticates with the Checkly API |
-| `CHECKLY_ACCOUNT_ID` | Both workflows | Identifies the Checkly account |
-
-`ENVIRONMENT_URL` is hardcoded to `https://raccoon-records.vercel.app` in the Checkly workflow.
+Use `ENVIRONMENT_URL` in CI or Checkly environments to point tests at the deployed app.
 
 ---
 
@@ -241,8 +234,9 @@ Runs on every push and PR to `main`. Installs Chromium, executes the Playwright 
 |---|---|
 | `npm run dev` | Start the demo app at `http://localhost:3000` |
 | `npm test` | Run all Playwright tests (all projects) |
-| `npm run test:monitor` | Run only `@monitor` tests (checkly project) |
+| `npm run test:monitor` | Run production-safe `@monitor` tests in Chromium |
 | `npm run test:chromium` | Run tests in Chromium only |
+| `npm run test:visual` | Run visual regression tests in Chromium |
 | `npm run test:headed` | Run Chromium tests in headed mode |
 | `npm run test:debug` | Open Playwright Inspector for debugging |
 | `npm run test:ui` | Open Playwright UI mode |

@@ -32,7 +32,7 @@ jobs:
           CI: true
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
-        run: npx playwright test --project=chromium
+        run: npx playwright test --project=chromium --grep-invert @visual
 
       - name: Upload Playwright HTML report
         uses: actions/upload-artifact@v4

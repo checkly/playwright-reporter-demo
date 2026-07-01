@@ -21,7 +21,7 @@ jobs:
         uses: checkly/checkly-action@main
         with:
           command: test
-          cli-version: latest
+          cli-version: 8.10.0
           working-directory: .
           install-command: npm ci
           env: ENVIRONMENT_URL=https://raccoon-records.vercel.app

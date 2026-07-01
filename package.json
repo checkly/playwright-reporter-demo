@@ -36,7 +36,7 @@
   "devDependencies": {
     "@checkly/playwright-reporter": "^1.10.0",
     "@playwright/test": "^1.58.2",
-    "checkly": "^7.15.0",
+    "checkly": "^8.10.0",
     "dotenv": "^17.4.2",
     "jit": "^0.1.1",
     "ts-node": "^10.9.2"
